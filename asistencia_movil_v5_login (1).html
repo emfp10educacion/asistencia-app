@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Asistencia</title>
+<style>
+  :root{
+    --ink:#1B2320;
+    --paper:#F5F7F5;
+    --card:#FFFFFF;
+    --line:#E1E6E2;
+    --accent:#0F6B5C;
+    --accent-soft:#E4F0EC;
+    --absent:#B3483C;
+    --absent-soft:#FBEAE7;
+    --warn:#B3803C;
+    --warn-soft:#FBF2E7;
+    --muted:#6B756F;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--paper); color:var(--ink); -webkit-tap-highlight-color:transparent;
+  }
+  .app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
+  header{
+    padding:20px 18px 14px; background:var(--ink); color:#fff;
+    border-radius:0 0 20px 20px;
+  }
+  .eyebrow{font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.65; margin-bottom:4px;}
+  h1{font-size:19px; margin:0 0 12px; font-weight:700;}
+  .meta-row{display:flex; gap:8px; align-items:center;}
+  .meta-row select, .meta-row input{
+    flex:1; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25);
+    color:#fff; border-radius:10px; padding:9px 10px; font-size:13px;
+  }
+  .meta-row select option{color:#111;}
+  .link-btn{
+    background:none; border:none; color:#fff; opacity:.75; font-size:12px;
+    text-decoration:underline; padding:4px 0;
+  }
+  .summary-bar{
+    display:flex; justify-content:space-between; padding:14px 18px; gap:10px;
+  }
+  .stat{flex:1; background:var(--card); border-radius:12px; padding:10px 8px; text-align:center; border:1px solid var(--line);}
+  .stat .n{font-size:20px; font-weight:800; line-height:1;}
+  .stat .l{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:3px;}
+  .stat.present .n{color:var(--accent);}
+  .stat.absent .n{color:var(--absent);}
+  .banner{
+    margin:0 18px 12px; padding:10px 12px; border-radius:10px; font-size:12.5px; line-height:1.4;
+  }
+  .banner.new{background:var(--warn-soft); color:#7a5a26; border:1px solid #E9D3A8;}
+  .banner.existing{background:var(--accent-soft); color:#0b4a3f; border:1px solid #bfe0d6;}
+  .banner.pending{background:var(--absent-soft); color:#7a2e22; border:1px solid #f0c4bc;}
+  .toolbar{display:flex; gap:8px; padding:0 18px 10px;}
+  .toolbar button{
+    flex:1; border:1px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:10px; padding:8px; font-size:12.5px; font-weight:600;
+  }
+  ul.roster{list-style:none; margin:0; padding:0 14px 100px; flex:1;}
+  li.student{
+    display:flex; align-items:center; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px;
+  }
+  .avatar{
+    width:34px; height:34px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;
+  }
+  .name{flex:1; font-size:14.5px; font-weight:600; line-height:1.25;}
+  .toggle{
+    display:flex; border-radius:10px; overflow:hidden; border:1px solid var(--line); flex-shrink:0;
+  }
+  .toggle button{
+    border:none; padding:8px 12px; font-size:12px; font-weight:700; background:#fff; color:var(--muted);
+  }
+  .toggle button.active-present{background:var(--accent); color:#fff;}
+  .toggle button.active-absent{background:var(--absent); color:#fff;}
+  .save-bar{
+    position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto;
+    background:linear-gradient(180deg, rgba(245,247,245,0), var(--paper) 30%);
+    padding:16px 18px 20px;
+  }
+  .save-bar button{
+    width:100%; background:var(--ink); color:#fff; border:none; border-radius:14px;
+    padding:15px; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .save-bar button:active{opacity:.85;}
+  .save-bar .status{text-align:center; font-size:12px; color:var(--muted); margin-top:8px; min-height:16px;}
+  .loading{padding:40px; text-align:center; color:var(--muted); font-size:13px;}
+  .error{padding:40px 24px; text-align:center; color:var(--absent); font-size:13.5px; line-height:1.5;}
+
+  /* pantallas de nombre / selector de curso */
+  .screen{padding:24px 20px; flex:1; display:flex; flex-direction:column;}
+  .screen h2{font-size:18px; margin:4px 0 4px;}
+  .screen p.sub{color:var(--muted); font-size:13px; margin:0 0 18px;}
+  .screen input[type=text]{
+    width:100%; padding:13px 14px; border-radius:12px; border:1px solid var(--line);
+    font-size:15px; margin-bottom:10px; background:var(--card);
+  }
+  .screen button.primary{
+    background:var(--ink); color:#fff; border:none; border-radius:12px; padding:14px;
+    font-size:15px; font-weight:700; margin-top:6px;
+  }
+  .curso-list{list-style:none; margin:6px 0 0; padding:0; overflow-y:auto; flex:1;}
+  .curso-item{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; margin-bottom:8px; text-align:left; width:100%; font-size:14px; color:var(--ink);
+  }
+  .curso-item .cnombre{font-weight:700; display:block;}
+  .curso-item .cmeta{font-size:12px; color:var(--muted); margin-top:2px; display:block;}
+  .curso-empty{color:var(--muted); font-size:13px; padding:20px 4px; text-align:center;}
+</style>
+</head>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<body>
+<div class="app" id="app">
+  <div class="loading">Cargando…</div>
+</div>
+
+<script>
+// 👇 URL que da Apps Script al implementar (termina en /exec)
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQX42d4s4HJ7ck2YIxVzuyVtcn9XqIduxuqUBq7heyqtshQMUnQ9WacZKD-n8iPICG/exec";
+
+// 👇 Client ID de OAuth generado en Google Cloud Console
+//    (termina en .apps.googleusercontent.com). Tiene que ser
+//    EXACTAMENTE el mismo valor que GOOGLE_CLIENT_ID en el backend.
+const GOOGLE_CLIENT_ID = "602289685493-vqk48ip48087vjpc2fmm1odkdrnqkja8.apps.googleusercontent.com";
+
+// v5 — 25/08/2026. Cambios respecto a v4:
+//  - Reemplaza el campo de texto libre "¿Cómo te llamás?" y el APP_TOKEN
+//    por un login real con Google (botón oficial de Identity Services).
+//    El backend verifica el idToken contra Google y contra la hoja
+//    "Profesores" — nadie puede simplemente escribir cualquier nombre.
+//  - idToken vive solo en memoria (variable JS), no en localStorage: dura
+//    lo que dura la pestaña abierta. Si se cierra la app y se vuelve a
+//    abrir, hay que loguearse de nuevo (los ID token de Google además
+//    vencen solos al ratito).
+//  - Cola local de guardados pendientes: si falla el guardado por falta
+//    de conexión, queda en localStorage y se reintenta solo (al volver
+//    la señal, o cada 30s con la app abierta).
+//  - El date picker no deja elegir fechas futuras.
+//  - Si el backend ignora algún DNI (no pertenece al roster del curso),
+//    se avisa en el mensaje de estado.
+const PRESENTE = 'Presente';
+const AUSENTE = 'Ausente';
+const QUEUE_KEY = 'pendingSaves';
+
+let screen = 'login'; // login | select-course | attendance | error
+let errorMsg = '';
+
+let idToken = '';         // vive solo en memoria, no en localStorage
+let docenteNombre = '';   // viene del backend tras verificar el login
+let cursoId = localStorage.getItem('cursoId') || '';
+let cursoNombre = localStorage.getItem('cursoNombre') || '';
+let cursoMeta = localStorage.getItem('cursoMeta') || '';
+
+let cursos = [];       // lista completa de cursos activos
+let cursoFiltro = '';  // texto de búsqueda en el selector
+
+let students = [];     // roster del curso elegido: [{ dni, name }]
+let attendance = {};   // dni alumno -> 'Presente' | 'Ausente'
+let cargadoInfo = { cargado: false, ultimaCarga: null, cargadoPor: '' };
+
+function todayLocal(){
+  // OJO: NO usar new Date().toISOString() acá — eso convierte a UTC
+  // y en Argentina (UTC-3) adelanta la fecha un día durante la tarde/noche.
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+let currentDate = todayLocal();
+
+function initials(name){
+  const parts = name.split(' ').filter(Boolean);
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+function formatDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('es-AR', { weekday:'short', day:'2-digit', month:'short' });
+}
+
+async function apiGet(params){
+  const url = `${APPS_SCRIPT_URL}?${params}&idToken=${encodeURIComponent(idToken)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+
+// ---------- cola de guardados pendientes (offline) ----------
+
+function getQueue(){
+  try{ return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function setQueue(q){
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+}
+function queueSave(payload){
+  // Un solo pendiente por curso+fecha — si se reintenta antes de que
+  // sincronice, la versión más nueva reemplaza a la vieja en la cola.
+  const q = getQueue().filter(p => !(p.cursoId === payload.cursoId && p.fecha === payload.fecha));
+  q.push(payload);
+  setQueue(q);
+}
+async function flushQueue(){
+  const q = getQueue();
+  if (!q.length) return;
+  const restantes = [];
+  for (const payload of q){
+    try{
+      const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+      const result = await res.json();
+      if (!result.ok) throw new Error(result.error || 'error');
+    }catch(e){
+      restantes.push(payload); // se reintenta la próxima vez
+    }
+  }
+  const huboUnCambio = restantes.length !== q.length;
+  setQueue(restantes);
+  if (huboUnCambio && screen === 'attendance') await loadForDate(currentDate);
+  else if (huboUnCambio) render();
+}
+
+// ---------- arranque ----------
+
+function esperarGoogleIdentity(intentos){
+  return new Promise((resolve, reject) => {
+    const check = (restantes) => {
+      if (window.google && google.accounts && google.accounts.id) return resolve();
+      if (restantes <= 0) return reject(new Error('No se pudo cargar el login de Google.'));
+      setTimeout(() => check(restantes - 1), 150);
+    };
+    check(intentos);
+  });
+}
+
+async function init(){
+  await flushQueue(); // por si quedó algo pendiente de una sesión anterior sin conexión
+  window.addEventListener('online', flushQueue);
+  setInterval(flushQueue, 30000);
+
+  screen = 'login';
+  render();
+
+  try{
+    await esperarGoogleIdentity(40); // hasta ~6 segundos
+  }catch(e){
+    errorMsg = 'No se pudo cargar el botón de Google. Revisá tu conexión y recargá la página.';
+    screen = 'login-error';
+    render();
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleLogin
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('googleBtn'),
+    { theme: 'outline', size: 'large', width: 280, locale: 'es' }
+  );
+}
+
+async function handleGoogleLogin(response){
+  idToken = response.credential;
+  screen = 'loading';
+  render();
+  try{
+    const data = await apiGet('action=verificar');
+    if (!data.ok){
+      errorMsg = data.error || 'No se pudo verificar tu acceso.';
+      screen = 'login-error';
+      render();
+      return;
+    }
+    docenteNombre = data.nombre;
+    await goToCourseListOrSaved();
+  }catch(e){
+    errorMsg = 'No se pudo conectar. Revisá tu conexión e intentá de nuevo.';
+    screen = 'login-error';
+    render();
+  }
+}
+
+function cerrarSesion(){
+  idToken = '';
+  docenteNombre = '';
+  screen = 'login';
+  render();
+  google.accounts.id.prompt(); // opcional: ofrece re-loguearse enseguida
+}
+
+async function goToCourseListOrSaved(){
+  screen = 'loading';
+  render();
+  try{
+    cursos = await apiGet('action=cursos');
+  }catch(e){
+    errorMsg = 'No se pudo conectar. Revisá tu conexión e intentá de nuevo.';
+    screen = 'error';
+    render();
+    return;
+  }
+
+  const sigueActivo = cursoId && cursos.some(c => c.id === cursoId);
+  if (sigueActivo){
+    await openCurso(cursoId, cursoNombre, cursoMeta);
+  } else {
+    cursoId = ''; cursoNombre = ''; cursoMeta = '';
+    screen = 'select-course';
+    render();
+  }
+}
+
+function changeCourse(){
+  screen = 'select-course';
+  cursoFiltro = '';
+  render();
+}
+
+async function openCurso(id, nombre, meta){
+  cursoId = id; cursoNombre = nombre; cursoMeta = meta;
+  localStorage.setItem('cursoId', id);
+  localStorage.setItem('cursoNombre', nombre);
+  localStorage.setItem('cursoMeta', meta);
+
+  screen = 'loading';
+  render();
+  try{
+    students = await apiGet(`action=roster&cursoId=${encodeURIComponent(cursoId)}`);
+  }catch(e){
+    errorMsg = 'No se pudo cargar la lista de alumnos. Revisá tu conexión e intentá de nuevo.';
+    screen = 'error';
+    render();
+    return;
+  }
+  screen = 'attendance';
+  await loadForDate(currentDate);
+}
+
+// ---------- asistencia ----------
+
+async function loadForDate(date){
+  attendance = {};
+  try{
+    const data = await apiGet(`action=attendance&cursoId=${encodeURIComponent(cursoId)}&fecha=${date}`);
+    cargadoInfo = { cargado: data.cargado, ultimaCarga: data.ultimaCarga, cargadoPor: data.cargadoPor };
+    students.forEach(s => {
+      attendance[s.dni] = (s.dni in data.asistencia) ? data.asistencia[s.dni] : PRESENTE;
+    });
+  }catch(e){
+    cargadoInfo = { cargado: false, ultimaCarga: null, cargadoPor: '' };
+    students.forEach(s => attendance[s.dni] = PRESENTE);
+  }
+  render();
+}
+
+async function save(){
+  if (cargadoInfo.cargado){
+    const aviso = `Esta fecha ya tiene una carga (${cargadoInfo.ultimaCarga}${cargadoInfo.cargadoPor ? ' — ' + cargadoInfo.cargadoPor : ''}).\n¿Confirmás que querés modificarla?`;
+    if (!confirm(aviso)) return;
+  }
+
+  const payload = {
+    cursoId: cursoId,
+    fecha: currentDate,
+    asistencia: attendance,
+    idToken: idToken
+  };
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const result = await res.json();
+    if (!result.ok) throw new Error(result.error || 'error desconocido');
+
+    await loadForDate(currentDate);
+    const avisoIgnorados = result.ignorados > 0
+      ? ` — ⚠ ${result.ignorados} registro(s) ignorado(s) por no pertenecer a este curso`
+      : '';
+    document.getElementById('status').textContent =
+      `Guardado y verificado ✓ ${formatDate(currentDate)} · ${cargadoInfo.ultimaCarga}${avisoIgnorados}`;
+  }catch(e){
+    queueSave(payload);
+    render();
+    const status = document.getElementById('status');
+    if (status) status.textContent = 'Sin conexión — quedó guardado en este celular y se sube solo apenas vuelva la señal.';
+  }
+}
+
+function setAll(value){
+  students.forEach(s => attendance[s.dni] = value);
+  render();
+}
+
+function toggle(dni, value){
+  attendance[dni] = value;
+  render();
+}
+
+// ---------- render ----------
+
+function pendingBannerHTML(){
+  const n = getQueue().length;
+  if (!n) return '';
+  return `<div class="banner pending">📶 ${n} asistencia(s) sin subir todavía — se reintenta solo cuando haya señal.</div>`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+
+  if (screen === 'loading'){
+    app.innerHTML = `<div class="loading">Cargando…</div>`;
+    return;
+  }
+
+  if (screen === 'error'){
+    app.innerHTML = `<div class="error">${errorMsg}</div>`;
+    return;
+  }
+
+  if (screen === 'login'){
+    app.innerHTML = `
+      <div class="screen">
+        <h2>Iniciar sesión</h2>
+        <p class="sub">Entrá con tu cuenta de Google institucional para poder tomar asistencia.</p>
+        <div id="googleBtn" style="display:flex; justify-content:center; margin-top:16px;"></div>
+      </div>`;
+    return;
+  }
+
+  if (screen === 'login-error'){
+    app.innerHTML = `
+      <div class="screen">
+        <h2>No se pudo iniciar sesión</h2>
+        <p class="sub">${errorMsg}</p>
+        <button class="primary" id="reintentarBtn">Volver a intentar</button>
+      </div>`;
+    document.getElementById('reintentarBtn').addEventListener('click', () => {
+      init();
+    });
+    return;
+  }
+
+  if (screen === 'select-course'){
+    const q = cursoFiltro.trim().toLowerCase();
+    const filtrados = cursos.filter(c =>
+      !q || c.nombre.toLowerCase().includes(q) || c.sede.toLowerCase().includes(q) || c.turno.toLowerCase().includes(q)
+    );
+    app.innerHTML = `
+      ${pendingBannerHTML()}
+      <div class="screen" style="padding-bottom:12px;">
+        <h2>Elegí tu curso</h2>
+        <p class="sub">Hola ${docenteNombre} — <button class="link-btn" id="cambiarNombreBtn" style="color:var(--accent);">no soy yo</button></p>
+        <input type="text" id="filtroInput" placeholder="Buscar por nombre, sede o turno…" value="${cursoFiltro}">
+        <ul class="curso-list" id="cursoList">
+          ${filtrados.length ? filtrados.map(c => `
+            <li>
+              <button class="curso-item" data-id="${c.id}" data-nombre="${c.nombre}" data-meta="${c.sede} · ${c.turno}">
+                <span class="cnombre">${c.nombre}</span>
+                <span class="cmeta">${c.sede}${c.sede && c.turno ? ' · ' : ''}${c.turno}</span>
+              </button>
+            </li>`).join('') : `<div class="curso-empty">No se encontraron cursos.</div>`}
+        </ul>
+      </div>`;
+    document.getElementById('filtroInput').addEventListener('input', e => {
+      cursoFiltro = e.target.value;
+      render();
+      document.getElementById('filtroInput').focus();
+    });
+    document.getElementById('cambiarNombreBtn').addEventListener('click', cerrarSesion);
+    document.querySelectorAll('.curso-item').forEach(btn => {
+      btn.addEventListener('click', () => openCurso(btn.dataset.id, btn.dataset.nombre, btn.dataset.meta));
+    });
+    return;
+  }
+
+  // screen === 'attendance'
+  const sinAlumnos = students.length === 0;
+  const presentCount = students.filter(s => attendance[s.dni] === PRESENTE).length;
+  const absentCount = students.length - presentCount;
+
+  const banner = cargadoInfo.cargado
+    ? `<div class="banner existing">Esta fecha ya fue cargada el ${cargadoInfo.ultimaCarga}${cargadoInfo.cargadoPor ? ' por ' + cargadoInfo.cargadoPor : ''}. Guardar de nuevo la va a modificar.</div>`
+    : `<div class="banner new">Esta fecha todavía no tiene carga — vas a crear un registro nuevo.</div>`;
+
+  app.innerHTML = `
+    <header>
+      <div class="eyebrow">${cursoMeta || 'Curso'}</div>
+      <h1>${cursoNombre}</h1>
+      <div class="meta-row">
+        <input type="date" id="datePicker" value="${currentDate}" max="${todayLocal()}">
+      </div>
+      <button class="link-btn" id="cambiarCursoBtn" style="margin-top:8px;">Cambiar de curso</button>
+    </header>
+
+    ${pendingBannerHTML()}
+
+    ${sinAlumnos ? `
+      <div class="screen">
+        <div class="curso-empty">Este curso todavía no tiene alumnos cargados. Verificá que exista una hoja llamada <strong>${cursoId}</strong> con las columnas DNI · Alumno · Teléfono · Estado, y que tenga al menos un DNI completo.</div>
+      </div>
+    ` : `
+      ${banner}
+
+      <div class="summary-bar">
+        <div class="stat present"><div class="n">${presentCount}</div><div class="l">Presentes</div></div>
+        <div class="stat absent"><div class="n">${absentCount}</div><div class="l">Ausentes</div></div>
+        <div class="stat"><div class="n">${students.length}</div><div class="l">Matrícula</div></div>
+      </div>
+
+      <div class="toolbar">
+        <button id="allPresent">Marcar todos presentes</button>
+        <button id="allAbsent">Marcar todos ausentes</button>
+      </div>
+
+      <ul class="roster">
+        ${students.map(s => `
+          <li class="student">
+            <div class="avatar">${initials(s.name)}</div>
+            <div class="name">${s.name}</div>
+            <div class="toggle">
+              <button data-dni="${s.dni}" data-val="${PRESENTE}" class="${attendance[s.dni] === PRESENTE ? 'active-present' : ''}">P</button>
+              <button data-dni="${s.dni}" data-val="${AUSENTE}" class="${attendance[s.dni] === AUSENTE ? 'active-absent' : ''}">A</button>
+            </div>
+          </li>
+        `).join('')}
+      </ul>
+
+      <div class="save-bar">
+        <button id="saveBtn">💾 Guardar asistencia</button>
+        <div class="status" id="status"></div>
+      </div>
+    `}
+  `;
+
+  document.getElementById('datePicker').addEventListener('change', e => {
+    currentDate = e.target.value;
+    loadForDate(currentDate);
+  });
+  document.getElementById('cambiarCursoBtn').addEventListener('click', changeCourse);
+
+  if (!sinAlumnos){
+    document.getElementById('allPresent').addEventListener('click', () => setAll(PRESENTE));
+    document.getElementById('allAbsent').addEventListener('click', () => setAll(AUSENTE));
+    document.getElementById('saveBtn').addEventListener('click', save);
+    document.querySelectorAll('.toggle button').forEach(btn => {
+      btn.addEventListener('click', () => toggle(btn.dataset.dni, btn.dataset.val));
+    });
+  }
+}
+
+init();
+</script>
+</body>
+</html>
