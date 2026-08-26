@@ -283,7 +283,7 @@ async function handleGoogleLogin(response){
     docenteNombre = data.nombre;
     await goToCourseListOrSaved();
   }catch(e){
-    errorMsg = 'No se pudo conectar. Revisá tu conexión e intentá de nuevo.';
+    errorMsg = e.message || 'No se pudo conectar. Revisá tu conexión e intentá de nuevo.';
     screen = 'login-error';
     render();
   }
