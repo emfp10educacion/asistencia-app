@@ -73,6 +73,40 @@
      partir de eso; se reinicia a Presente en cada curso/fecha nuevo
      (aplicarAsistenciaCargada) para no arrastrar estado entre planillas.
 
+  v13 — ajustes puntuales de esta sesión sobre agregar-alumno,
+  guardado y login:
+  · .att-header h1 + .date-row (regla puntual de v12) se elimina: ya
+    no aplica, porque agregar-alumno ahora replica la estructura de
+    asistencia (header-meta con la sede + header-divider en el
+    header, caja de fecha dentro de .att-body con el mismo
+    padding-top:gap-block que separa el header del panel de stats en
+    asistencia). Mismo margen, misma línea divisoria, mismo aire.
+  · Se saca `${pendingBannerHTML()}` de la pantalla de asistencia: al
+    fallar/reintentar un guardado quedaban dos avisos iguales en
+    pantalla (el banner naranja arriba y el texto de estado junto al
+    botón). Se deja solo el de la zona del botón. pendingBannerHTML()
+    sigue en la lista de cursos, donde no hay duplicado.
+  · flushQueue() ahora refleja el reintento automático en el botón
+    (Guardando → Guardado) cuando la fecha en cola es la que está en
+    pantalla — antes solo cambiaba el texto de abajo y el botón se
+    quedaba quieto, pasando desapercibido.
+  · .save-btn.is-saved .save-dot pasa a fondo sólido + box-shadow:
+    var(--carve) (el mismo inset que usa el resto de la hoja para
+    "superficie tallada hacia adentro"), en vez de quedar hueco — es
+    el efecto que se había perdido al terminar de guardar.
+  · .alta-title pasa de gap-micro a gap-block: había quedado pegado
+    al campo DNI.
+  · Se saca el placeholder de ejemplo que quedaba en Teléfono
+    (DNI y Apellido y nombre ya no lo tenían).
+  · Login: renderButton() y el prompt "One Tap" de Google
+    (accounts.id.prompt()) son dos UI separadas de Google — al cerrar
+    sesión se llamaba a prompt() mientras el <div id="googleBtn">
+    quedaba vacío (cada render() lo recrea), así que se veían dos
+    cosas distintas. Se unifica todo en una sola función
+    (montarBotonGoogle()) que solo usa renderButton(), llamada tanto
+    al arrancar como al volver a la pantalla de login después de
+    cerrar sesión — un único botón de Google, siempre.
+
   v12 — ajustes puntuales sobre agregar-alumno, asistencia y login
   (pedido explícito de esta sesión):
   · Se elimina el banner "esta fecha todavía no tiene carga — vas a
@@ -278,11 +312,6 @@
   /* ============ header de asistencia ============ */
   .att-header{padding:40px var(--gutter) 0; display:flex; flex-direction:column;}
   .header-divider{width:100%; height:1px; background:var(--line-soft); margin:var(--gap-heading) 0 0;}
-  /* alta: h1 va seguido directo de la caja de fecha (sin header-meta/divider
-     de por medio como en asistencia), así que ese salto necesita su propio
-     aire — mismo valor que separa el header del panel central en asistencia
-     (gap-block, vía el padding-top de .att-body). */
-  .att-header h1 + .date-row{margin-top:var(--gap-block);}
   .att-header h1{font-size:var(--fs-display); font-weight:600; letter-spacing:.02em; margin:0 0 var(--gap-heading); text-align:center; color:var(--brand);}
   /* v9: date-row, stat-strip, roster y botones comparten ahora el mismo
      ancho (100% del rectángulo marcado por --gutter en .att-body) en vez
@@ -376,7 +405,7 @@
   .save-btn .save-btn-label{line-height:1;}
   .save-btn.is-saving, .save-btn.is-saved{pointer-events:none;}
   .save-btn.is-saving .save-dot{border-color: rgba(217,105,43,.22); border-top-color: var(--brand); box-shadow:none; animation: save-spin 1s linear infinite;}
-  .save-btn.is-saved .save-dot{border-color: var(--brand); background: transparent; animation: save-seal .4s var(--ease-premium) forwards;}
+  .save-btn.is-saved .save-dot{border-color: var(--brand); background: var(--brand); box-shadow: var(--carve); animation: save-seal .4s var(--ease-premium) forwards;}
   @keyframes save-spin{ to{ transform:rotate(360deg); } }
   @keyframes save-seal{ 0%{ transform:scale(1); } 45%{ transform:scale(.7); } 100%{ transform:scale(1); } }
   .add-btn{
@@ -394,7 +423,7 @@
 
   /* ============ panel de alta (pantalla propia) ============ */
   .alta-panel{padding:0 2px 4px;}
-  .alta-panel .alta-title{font-size:var(--fs-body); font-weight:500; color:var(--carbon-gastado); margin-bottom:var(--gap-micro);}
+  .alta-panel .alta-title{font-size:var(--fs-body); font-weight:500; color:var(--carbon-gastado); margin-bottom:var(--gap-block);}
   .alta-panel .alta-sub{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); line-height:1.5; margin-bottom:var(--gap-block);}
   .alta-field{margin-bottom:var(--gap-field);}
   .alta-field label{display:block; font-size:var(--fs-micro); font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--gris-oscuro); margin-bottom:var(--gap-micro); font-family:var(--mono);}
@@ -562,6 +591,17 @@ async function flushQueue(){
   if (!q.length) return;
   if (!idToken){ render(); return; }
 
+  // Si la fecha que se está mostrando en pantalla es una de las que hay
+  // en cola, reflejar el reintento en el botón (Guardando…) igual que en
+  // el guardado manual — antes el botón se quedaba quieto y solo cambiaba
+  // el texto de abajo, así que un reintento automático pasaba desapercibido.
+  const vistaEnCola = screen === 'attendance' &&
+    q.some(p => p.cursoId === cursoId && p.fecha === currentDate);
+  if (vistaEnCola){
+    saveState = 'saving';
+    render();
+  }
+
   const restantes = [];
   const exitosos = [];
   for (const payloadSinToken of q){
@@ -592,10 +632,12 @@ async function flushQueue(){
 
   if (afectaVistaActual){
     await loadForDate(currentDate);
+    saveState = 'saved';
     statusMsg = `Guardado y verificado ✓ ${formatDate(currentDate)} — subido apenas volvió la señal.`;
     render();
-    setTimeout(() => { statusMsg = ''; render(); }, 4000);
+    setTimeout(() => { saveState = 'idle'; statusMsg = ''; render(); }, 4000);
   } else {
+    if (vistaEnCola) saveState = 'idle';
     render();
   }
 }
@@ -643,6 +685,16 @@ async function init(){
   }
 
   google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleLogin });
+  montarBotonGoogle();
+}
+
+// Único punto donde se pinta el botón de Google, para no tener dos UI
+// de Google distintas a la vez (el botón embebido de renderButton() y
+// el "One Tap" flotante de prompt() eran dos cosas separadas — esta
+// pantalla solo necesita una). Se llama tanto en el arranque como al
+// volver a la pantalla de login después de cerrar sesión, porque cada
+// render() recrea el <div id="googleBtn"> vacío.
+function montarBotonGoogle(){
   google.accounts.id.renderButton(
     document.getElementById('googleBtn'),
     { theme: 'outline', size: 'large', width: 280, locale: 'es' }
@@ -670,7 +722,7 @@ function cerrarSesion(){
   docenteNombre = '';
   screen = 'login';
   render();
-  google.accounts.id.prompt();
+  montarBotonGoogle();
 }
 
 async function goToCourseListOrSaved(){
@@ -1085,23 +1137,24 @@ function render(){
     app.innerHTML = `
       <div class="att-header">
         <h1>${cursoNombre}</h1>
-        <div class="date-row mono"><span>${formatDateRow(currentDate)}</span><span>▾</span></div>
+        ${cursoMeta ? `<div class="header-meta">${cursoMeta}</div>` : ''}
         <div class="header-divider"></div>
       </div>
       <div class="att-body">
+        <div class="date-row mono"><span>${formatDateRow(currentDate)}</span><span>▾</span></div>
         <div class="alta-panel">
           <div class="alta-title">Agregar alumno</div>
           <div class="alta-field">
             <label>DNI</label>
-            <input type="text" id="altaDni" inputmode="numeric" placeholder="30123456" value="${altaForm.dni}">
+            <input type="text" id="altaDni" inputmode="numeric" value="${altaForm.dni}">
           </div>
           <div class="alta-field">
-            <label>Nombre y apellido</label>
-            <input type="text" id="altaNombre" placeholder="Apellido Nombre" value="${altaForm.nombre}">
+            <label>Apellido y nombre</label>
+            <input type="text" id="altaNombre" value="${altaForm.nombre}">
           </div>
           <div class="alta-field">
             <label>Teléfono</label>
-            <input type="tel" id="altaTelefono" inputmode="tel" placeholder="011 15-1234-5678" value="${altaForm.telefono}">
+            <input type="tel" id="altaTelefono" inputmode="tel" value="${altaForm.telefono}">
           </div>
           ${altaForm.error ? `<div class="alta-error">${altaForm.error}</div>` : ''}
           <div class="alta-actions">
@@ -1156,7 +1209,6 @@ function render(){
           <span>▾</span>
         </div>
 
-        ${pendingBannerHTML()}
         ${banner}
 
         <div class="bulk-actions">
