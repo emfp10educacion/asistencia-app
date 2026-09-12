@@ -73,6 +73,24 @@
      partir de eso; se reinicia a Presente en cada curso/fecha nuevo
      (aplicarAsistenciaCargada) para no arrastrar estado entre planillas.
 
+  v15 — ajustes puntuales de esta sesión (panel de stats y botón de
+  Google):
+  · .stat .n (los números de Presentes/Ausentes/Matrícula) baja un
+    escalón en la escala tipográfica: de --fs-heading (18px) a
+    --fs-body (15px), el escalón inmediato inferior ya existente en
+    :root — no un valor suelto nuevo. Esto achica el ancho visual de
+    los números sin tocar el diámetro del círculo (54px) que los
+    contiene. --fs-heading queda ahora reservado solo para los h2 de
+    pantalla (login y selección de curso); el comentario junto a
+    --fs-heading/--fs-body en :root se actualiza para reflejarlo.
+  · #googleBtn: el retraso de 400ms (introducido en v14 para ocultar
+    el repintado en dos pasos del botón de Google) resultó
+    insuficiente — esta sesión reportó ver primero "Acceder con
+    Google" y recién después "Iniciar sesión con Google". Se sube a
+    900ms para cubrir con margen ese repintado interno del iframe de
+    Google (sigue sin ser editable desde acá); así se ve solo el
+    resultado final.
+
   v14 — ajustes puntuales de esta sesión (login, mensajes de guardado
   y el punto naranja):
   · #googleBtn arranca en opacity:0 y se revela recién 400ms después
@@ -250,8 +268,8 @@
     --fs-micro-mono:9.5px;  /* rótulos decorativos: presente/ausente del switch, Presentes/Ausentes/Matrícula */
     --fs-micro:11px;        /* etiquetas de campo: DNI, NOMBRE, TELÉFONO; pie de login */
     --fs-small:13px;        /* texto secundario: avisos, banners, meta, subtítulos */
-    --fs-body:15px;         /* texto principal: nombres, botones, inputs */
-    --fs-heading:18px;      /* h2 de pantalla + números del tablero de stats (antes 18/17, fusionados) */
+    --fs-body:15px;         /* texto principal: nombres, botones, inputs; números del tablero de stats (desde v15) */
+    --fs-heading:18px;      /* h2 de pantalla (login, selección de curso) */
     --fs-display:27px;      /* nombre del curso */
 
     /* v10 — escala de espaciado (nueva), mismo criterio que --fs-* de v9:
@@ -366,7 +384,7 @@
     position:relative; width:54px; height:54px; margin:0 auto var(--gap-micro); border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     border:1px solid var(--gris-oscuro); color:var(--carbon-gastado);
-    font-size:var(--fs-heading); font-weight:500; font-variant-numeric:tabular-nums;
+    font-size:var(--fs-body); font-weight:500; font-variant-numeric:tabular-nums;
     background:linear-gradient(155deg, #E3E3DF 0%, #ECECE8 50%, #F5F5F2 100%);
     box-shadow: inset 1px 1px 2px rgba(42,40,38,.10), inset -0.5px -0.5px 1px rgba(255,255,255,.5);
   }
@@ -724,8 +742,9 @@ async function init(){
 // (una primera versión y después la definitiva con logo/tipografía ya
 // cargados) — eso es lo que se veía como "dos botones". No podemos
 // tocar ese iframe, así que el contenedor arranca en opacity:0 y recién
-// se muestra 400ms después de pedirle a Google que lo dibuje, tiempo
-// de sobra para que termine su propio repintado. Así solo se ve la
+// se muestra 900ms después de pedirle a Google que lo dibuje (subido
+// desde 400ms en v15, que no alcanzaba a cubrir el repintado completo
+// —incluido el cambio de texto, no solo de estilo). Así solo se ve la
 // versión final.
 function montarBotonGoogle(){
   const cont = document.getElementById('googleBtn');
@@ -737,7 +756,7 @@ function montarBotonGoogle(){
   setTimeout(() => {
     cont.style.transition = 'opacity .2s ease';
     cont.style.opacity = '1';
-  }, 400);
+  }, 900);
 }
 
 async function handleGoogleLogin(response){
