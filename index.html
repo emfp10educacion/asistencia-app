@@ -73,6 +73,23 @@
      partir de eso; se reinicia a Presente en cada curso/fecha nuevo
      (aplicarAsistenciaCargada) para no arrastrar estado entre planillas.
 
+  v11 — peso de los tres botones de acción principal (pedido explícito:
+  "guardar asistencia, agregar alumno, agregar más finito, como si no
+  tuviese negrita"). Sin cambios de tamaño, color, ícono ni layout —
+  .save-btn, .add-btn, .alta-confirm y .sname (nombre de alumno) pasan
+  de font-weight:500 a 400, el mismo peso que ya usan inputs, date-row
+  y filtro-input en esta hoja. No se inventa un peso nuevo: se reutiliza
+  uno ya presente en la escala (300/400/500/600), así la cantidad de
+  pesos tipográficos del sistema no crece.
+
+  Además, --fs-stat (17px, números del tablero) se fusiona con
+  --fs-heading (18px, h2 de pantalla) — quedan a 1px de distancia y
+  no justificaban ser dos escalones separados. La escala de tamaños
+  pasa de siete a seis pasos: micro-mono/micro/small/body/heading/display.
+  .gbtn (Google) y los rótulos con función de énfasis que ya usaban
+  500 (nombre de curso, stat-label, switch-caption, alta-title,
+  alta-field label, login-foot) quedan sin tocar.
+
   v10 — simetría de espaciado (pedido explícito: "distancia entre cada
   caja, elemento, texto" y "líneas divisorias gris claro"). Sin cambios
   de lógica ni de estructura HTML — solo valores de margin/padding,
@@ -142,8 +159,7 @@
     --fs-micro:11px;        /* etiquetas de campo: DNI, NOMBRE, TELÉFONO; pie de login */
     --fs-small:13px;        /* texto secundario: avisos, banners, meta, subtítulos */
     --fs-body:15px;         /* texto principal: nombres, botones, inputs */
-    --fs-stat:17px;         /* números del tablero de stats */
-    --fs-heading:18px;      /* h2 de pantalla */
+    --fs-heading:18px;      /* h2 de pantalla + números del tablero de stats (antes 18/17, fusionados) */
     --fs-display:27px;      /* nombre del curso */
 
     /* v10 — escala de espaciado (nueva), mismo criterio que --fs-* de v9:
@@ -258,7 +274,7 @@
     position:relative; width:54px; height:54px; margin:0 auto var(--gap-micro); border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     border:1px solid var(--gris-oscuro); color:var(--carbon-gastado);
-    font-size:var(--fs-stat); font-weight:500; font-variant-numeric:tabular-nums;
+    font-size:var(--fs-heading); font-weight:500; font-variant-numeric:tabular-nums;
     background:linear-gradient(155deg, #E3E3DF 0%, #ECECE8 50%, #F5F5F2 100%);
     box-shadow: inset 1px 1px 2px rgba(42,40,38,.10), inset -0.5px -0.5px 1px rgba(255,255,255,.5);
   }
@@ -269,7 +285,7 @@
   .roster{border-top:1px solid var(--line-soft);}
   .student{display:flex; align-items:center; gap:12px; padding:var(--gap-block) 2px; border-bottom:1px solid var(--line-soft);}
   .student:last-child{border-bottom:none;}
-  .sname{flex:1; font-family:var(--sans); font-size:var(--fs-body); font-weight:500; color:var(--carbon-gastado); text-align:left;}
+  .sname{flex:1; font-family:var(--sans); font-size:var(--fs-body); font-weight:400; color:var(--carbon-gastado); text-align:left;}
   .switch{
     position:relative; width:112px; height:36px; border:1px solid var(--muted-2); background:var(--paper);
     flex-shrink:0; overflow:hidden; cursor:pointer; -webkit-tap-highlight-color:transparent; outline:none;
@@ -316,7 +332,7 @@
   .save-btn{
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
-    padding:10px 20px; font-size:var(--fs-body); font-weight:500; letter-spacing:.02em; font-family:inherit; transition:box-shadow .08s var(--ease-premium);
+    padding:10px 20px; font-size:var(--fs-body); font-weight:400; letter-spacing:.02em; font-family:inherit; transition:box-shadow .08s var(--ease-premium);
   }
   .save-btn .save-dot{width:8px; height:8px; border-radius:50%; border:1px solid var(--brand); background:transparent; flex-shrink:0;}
   .save-btn .save-btn-label{line-height:1;}
@@ -328,7 +344,7 @@
   .add-btn{
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
-    padding:10px 20px; font-size:var(--fs-body); font-weight:500; letter-spacing:.02em; font-family:inherit; transition:box-shadow .08s var(--ease-premium);
+    padding:10px 20px; font-size:var(--fs-body); font-weight:400; letter-spacing:.02em; font-family:inherit; transition:box-shadow .08s var(--ease-premium);
     margin-top:var(--gap-heading);
   }
   /* pendiente #5 del handoff, resuelto acá: el punto de Agregar alumno
@@ -356,7 +372,7 @@
   .alta-confirm{
     flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
     background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
-    padding:10px 20px; font-size:var(--fs-body); font-weight:500; letter-spacing:.02em; font-family:inherit;
+    padding:10px 20px; font-size:var(--fs-body); font-weight:400; letter-spacing:.02em; font-family:inherit;
   }
   .alta-confirm:disabled{opacity:.6;}
   .alta-confirm .save-dot{width:8px; height:8px; border-radius:50%; border:1px solid var(--brand); background:transparent; flex-shrink:0;}
