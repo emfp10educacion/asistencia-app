@@ -72,6 +72,41 @@
      el valor que aplicaría el próximo click y el label se arma a
      partir de eso; se reinicia a Presente en cada curso/fecha nuevo
      (aplicarAsistenciaCargada) para no arrastrar estado entre planillas.
+
+  v10 — simetría de espaciado (pedido explícito: "distancia entre cada
+  caja, elemento, texto" y "líneas divisorias gris claro"). Sin cambios
+  de lógica ni de estructura HTML — solo valores de margin/padding,
+  formalizados en una escala nueva (--gap-*/--pad-control en :root,
+  mismo criterio que --fs-* de v9).
+
+  Dos problemas reales encontrados, no solo "números sueltos":
+
+  1. Cada línea divisoria (header, roster, save-bar) tenía un aire
+     distinto antes y después — nunca simétrica respecto de sí misma:
+       · header:    13px antes del divisor / 2px después (att-body)
+       · roster:    12px antes (bulk-actions) / 13px después (student)
+       · save-bar:  13px antes (student) / 17px después
+     Ahora las tres comparten una sola regla: 16px antes y 16px después
+     de cualquier divisor, sin excepción. En el header esto se logró
+     igualando el margin-bottom de h1 Y de .header-meta a 8px, para que
+     el total de cara al divisor (8px del texto + 8px del propio
+     divisor) dé siempre 16px, exista o no el subtítulo de curso.
+
+  2. Las dos pantallas que arrancan justo después del divisor del
+     header (asistencia y alta de alumno) tenían aire distinto entre
+     sí: alta-panel sumaba 16px propios sobre el padding de .att-body;
+     asistencia no sumaba nada. Resultado real: 16px en una pantalla,
+     2px en la otra. Se resuelve devolviendo esa responsabilidad a un
+     solo lugar (.att-body), y alta-panel deja de duplicarla.
+
+  Además, ritmo entre bloques del cuerpo (stat-strip, date-row,
+  banners, bulk-actions) unificado a 16px — antes 18/20/14/12px sin
+  relación entre sí. Padding vertical de toda caja con borde (inputs,
+  curso-item, date-row) unificado a 10px — antes 9/10/11px según el
+  elemento. Encabezados de pantalla (h1 de asistencia, h2 de login y
+  de selección de curso) comparten ahora el mismo margin-bottom hacia
+  el texto que sigue (8px). Login: framing simétrico 40px arriba/abajo
+  (antes 40/36).
 -->
 
 <style>
@@ -110,6 +145,25 @@
     --fs-stat:17px;         /* números del tablero de stats */
     --fs-heading:18px;      /* h2 de pantalla */
     --fs-display:27px;      /* nombre del curso */
+
+    /* v10 — escala de espaciado (nueva), mismo criterio que --fs-* de v9:
+       roles fijos, no valores sueltos por bloque. Resuelve dos problemas
+       reales detectados: (a) el ritmo vertical entre cajas del cuerpo no
+       tenía una unidad repetida — 12/14/18/20px sin lógica entre sí —, y
+       (b) cada línea divisoria gris (--line-soft) tenía un aire distinto
+       antes y después: la del header 13px antes / 2px después, la del
+       roster 12px antes / 13px después, la del save-bar 13px antes /
+       17px después, y alta-panel arrancaba a 16px de su divisor mientras
+       que el cuerpo de asistencia arrancaba a solo 2px del suyo. Ahora
+       las tres comparten una sola regla: 16px de aire antes y 16px
+       después de cualquier divisor, y el resto de las cajas usa la misma
+       escala de cinco pasos. */
+    --gap-micro:4px;    /* acoplamiento apretado: caption↔valor, título↔subtítulo pegado */
+    --gap-heading:8px;  /* heading → texto que sigue inmediatamente (h1/h2 de cada pantalla) */
+    --pad-control:10px; /* padding vertical de todo control con borde: inputs, botones, cards */
+    --gap-field:12px;   /* separación entre campos repetidos de un mismo formulario */
+    --gap-block:16px;   /* separación estándar entre bloques del cuerpo, y aire a cada lado de toda línea divisoria */
+    --gap-close:24px;   /* cierre de sección / pie de pantalla */
   }
   *{box-sizing:border-box;}
   body{
@@ -124,12 +178,12 @@
      centra logo+botón en el medio de la pantalla con flex:1 +
      justify-content:center. El pie queda abajo por flujo normal, sin
      necesitar margin-top:auto. */
-  .login-screen{flex:1; display:flex; flex-direction:column; align-items:center; padding:40px var(--gutter) 36px;}
+  .login-screen{flex:1; display:flex; flex-direction:column; align-items:center; padding:40px var(--gutter) 40px;}
   .login-main{flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;}
   .login-logo{width:232px; height:auto; margin-bottom:28px;}
-  .login-screen h2{font-size:var(--fs-heading); font-weight:300; margin:0 0 10px; text-align:center; position:relative; display:inline-block; padding-bottom:8px;}
+  .login-screen h2{font-size:var(--fs-heading); font-weight:300; margin:0 0 var(--gap-heading); text-align:center; position:relative; display:inline-block; padding-bottom:8px;}
   .login-screen h2::after{content:''; position:absolute; left:20%; right:20%; bottom:0; height:1px; background:var(--line-soft);}
-  .login-screen p{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; line-height:1.6; margin:16px 0 36px; max-width:230px;}
+  .login-screen p{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; line-height:1.6; margin:0 0 var(--gutter); max-width:230px;}
   .gbtn{
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
@@ -138,44 +192,44 @@
   }
   .gbtn .g-dot{width:8px; height:8px; border-radius:50%; border:1px solid var(--brand); background:transparent; flex-shrink:0;}
   .gbtn .gbtn-label{line-height:1;}
-  .login-foot{margin-top:24px; font-size:var(--fs-micro); font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--muted-2);}
+  .login-foot{margin-top:var(--gap-close); font-size:var(--fs-micro); font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--muted-2);}
 
   /* ============ NUEVO — sin cobertura en la muestra ============ */
   /* select-course: mismo lenguaje que login-screen + cajas talladas
      de .alta-field para el buscador y cada curso. */
   .select-screen{flex:1; display:flex; flex-direction:column; padding:40px var(--gutter) 20px;}
-  .select-screen h2{font-size:var(--fs-heading); font-weight:300; margin:0 0 10px; text-align:center;}
-  .select-screen .sub{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin:0 0 26px;}
+  .select-screen h2{font-size:var(--fs-heading); font-weight:300; margin:0 0 var(--gap-heading); text-align:center;}
+  .select-screen .sub{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin:0 0 var(--gap-block);}
   .filtro-input{
     width:100%; border:1px solid var(--precision-line); background:var(--paper);
-    border-radius:var(--radius); padding:10px 12px; font-size:var(--fs-body); font-weight:400;
-    font-family:var(--sans); color:var(--carbon-gastado); box-shadow:var(--carve); margin-bottom:14px;
+    border-radius:var(--radius); padding:var(--pad-control) 12px; font-size:var(--fs-body); font-weight:400;
+    font-family:var(--sans); color:var(--carbon-gastado); box-shadow:var(--carve); margin-bottom:var(--gap-block);
   }
   .filtro-input::placeholder{color:var(--muted-2); font-weight:300;}
   .curso-list{list-style:none; margin:0; padding:0; overflow-y:auto; flex:1;}
   .curso-item{
     width:100%; text-align:left; border:1px solid var(--precision-line); background:var(--paper);
-    border-radius:var(--radius); padding:11px 13px; margin-bottom:8px; box-shadow:var(--carve);
+    border-radius:var(--radius); padding:var(--pad-control) 12px; margin-bottom:8px; box-shadow:var(--carve);
     font-family:var(--sans); color:var(--carbon-gastado);
   }
   .curso-item .cnombre{display:block; font-size:var(--fs-body); font-weight:500;}
-  .curso-item .cmeta{display:block; font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); margin-top:2px;}
+  .curso-item .cmeta{display:block; font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); margin-top:var(--gap-micro);}
   .curso-empty{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; padding:24px 4px; line-height:1.6;}
   /* loading / error: sin chrome, solo texto centrado */
   .plain-msg{display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; font-size:var(--fs-body); font-weight:300; color:var(--gris-oscuro); line-height:1.6; flex:1;}
   /* link de baja jerarquía, reutilizado para "no soy yo", "Cambiar de
      curso" y "Marcar todos" — mismo componente que .alta-cancel, sin
      inventar un cuarto estilo de botón. */
-  .bulk-actions{display:flex; gap:16px; justify-content:center; margin-bottom:12px;}
-  .header-meta{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin:2px 0 10px;}
-  .banner-info{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); line-height:1.6; width:100%; margin:0 0 14px; text-align:left;}
-  .banner-pending{font-size:var(--fs-small); font-weight:400; color:var(--brand-ink); line-height:1.6; width:100%; margin:0 0 14px; text-align:left;}
-  .status{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin-top:6px; line-height:1.5;}
+  .bulk-actions{display:flex; gap:16px; justify-content:center; margin-bottom:var(--gap-block);}
+  .header-meta{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin:var(--gap-micro) 0 var(--gap-heading);}
+  .banner-info{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); line-height:1.6; width:100%; margin:0 0 var(--gap-block); text-align:left;}
+  .banner-pending{font-size:var(--fs-small); font-weight:400; color:var(--brand-ink); line-height:1.6; width:100%; margin:0 0 var(--gap-block); text-align:left;}
+  .status{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin-top:var(--gap-heading); line-height:1.5;}
 
   /* ============ header de asistencia ============ */
-  .att-header{padding:40px var(--gutter) 1px; display:flex; flex-direction:column;}
-  .header-divider{width:calc(100% + var(--gutter)*2); height:1px; background:var(--line-soft); margin:7px 0 0 calc(var(--gutter)*-1);}
-  .att-header h1{font-size:var(--fs-display); font-weight:600; letter-spacing:.02em; margin:0 0 6px; text-align:center; color:var(--brand);}
+  .att-header{padding:40px var(--gutter) 0; display:flex; flex-direction:column;}
+  .header-divider{width:calc(100% + var(--gutter)*2); height:1px; background:var(--line-soft); margin:var(--gap-heading) 0 0 calc(var(--gutter)*-1);}
+  .att-header h1{font-size:var(--fs-display); font-weight:600; letter-spacing:.02em; margin:0 0 var(--gap-heading); text-align:center; color:var(--brand);}
   /* v9: date-row, stat-strip, roster y botones comparten ahora el mismo
      ancho (100% del rectángulo marcado por --gutter en .att-body) en vez
      de anchos sueltos (90%/76%) — pedido explícito de esta sesión. */
@@ -183,25 +237,25 @@
     position:relative;
     border:1px solid var(--precision-line);
     background:linear-gradient(180deg, #F1F1EE 0%, var(--paper) 55%);
-    border-radius:var(--radius); padding:9px 16px; font-size:var(--fs-small); font-weight:400;
+    border-radius:var(--radius); padding:var(--pad-control) 16px; font-size:var(--fs-small); font-weight:400;
     display:flex; align-items:center; justify-content:center; gap:8px; color:var(--ink-max);
-    width:100%; margin:0 0 20px;
+    width:100%; margin:0 0 var(--gap-block);
     box-shadow: var(--carve);
   }
   .date-row span:last-child{color:var(--gris-oscuro); line-height:1;}
-  .att-body{flex:1; overflow:hidden; padding:2px var(--gutter) 0;}
+  .att-body{flex:1; overflow:hidden; padding:var(--gap-block) var(--gutter) 0;}
 
   /* ============ tablero de stats ============ */
   .stat-strip{
     display:flex; border:1px solid var(--precision-line);
     background:linear-gradient(180deg, #F5F5F2 0%, var(--paper) 60%);
-    border-radius:var(--radius); margin:0 0 18px; width:100%; padding:10px 4px 8px;
+    border-radius:var(--radius); margin:0 0 var(--gap-block); width:100%; padding:var(--gap-field) 4px;
     box-shadow: inset 0 1px 2px rgba(42,40,38,.07), inset 0 -1px 0 rgba(255,255,255,.5);
   }
   .stat{flex:1; text-align:center; padding:0 3px; border-right:1px solid var(--precision-line);}
   .stat:last-child{border-right:none;}
   .stat .n{
-    position:relative; width:54px; height:54px; margin:0 auto 4px; border-radius:50%;
+    position:relative; width:54px; height:54px; margin:0 auto var(--gap-micro); border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     border:1px solid var(--gris-oscuro); color:var(--carbon-gastado);
     font-size:var(--fs-stat); font-weight:500; font-variant-numeric:tabular-nums;
@@ -209,11 +263,11 @@
     box-shadow: inset 1px 1px 2px rgba(42,40,38,.10), inset -0.5px -0.5px 1px rgba(255,255,255,.5);
   }
   .stat .n.n-presente{color:rgb(18,125,105);}
-  .stat .l{font-size:var(--fs-micro-mono); font-weight:500; color:var(--gris-oscuro); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;}
+  .stat .l{font-size:var(--fs-micro-mono); font-weight:500; color:var(--gris-oscuro); text-transform:uppercase; letter-spacing:.05em; margin-top:0;}
 
   /* ============ roster + switch ============ */
   .roster{border-top:1px solid var(--line-soft);}
-  .student{display:flex; align-items:center; gap:12px; padding:13px 2px; border-bottom:1px solid var(--line-soft);}
+  .student{display:flex; align-items:center; gap:12px; padding:var(--gap-block) 2px; border-bottom:1px solid var(--line-soft);}
   .student:last-child{border-bottom:none;}
   .sname{flex:1; font-family:var(--sans); font-size:var(--fs-body); font-weight:500; color:var(--carbon-gastado); text-align:left;}
   .switch{
@@ -258,7 +312,7 @@
   .save-btn:active, .add-btn:active, .alta-confirm:active{
     box-shadow: inset 2px 2px 3px rgba(42,40,38,.12), inset -1px -1px 0 rgba(70,65,58,.6);
   }
-  .save-bar{padding:17px 0 22px; margin-top:auto; border-top:1px solid var(--line-soft);}
+  .save-bar{padding:var(--gap-block) 0 var(--gap-close); margin-top:auto; border-top:1px solid var(--line-soft);}
   .save-btn{
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
@@ -275,7 +329,7 @@
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
     padding:10px 20px; font-size:var(--fs-body); font-weight:500; letter-spacing:.02em; font-family:inherit; transition:box-shadow .08s var(--ease-premium);
-    margin-top:6px;
+    margin-top:var(--gap-heading);
   }
   /* pendiente #5 del handoff, resuelto acá: el punto de Agregar alumno
      seguía en --ink-max, el único de los cuatro botones de acción que
@@ -285,20 +339,20 @@
   .add-btn .save-dot{width:8px; height:8px; border-radius:50%; border:1px solid var(--brand); background:transparent; flex-shrink:0;}
 
   /* ============ panel de alta (pantalla propia) ============ */
-  .alta-panel{padding:14px 2px 4px;}
-  .alta-panel .alta-title{font-size:var(--fs-body); font-weight:500; color:var(--carbon-gastado); margin-bottom:3px;}
-  .alta-panel .alta-sub{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); line-height:1.5; margin-bottom:14px;}
-  .alta-field{margin-bottom:10px;}
-  .alta-field label{display:block; font-size:var(--fs-micro); font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--gris-oscuro); margin-bottom:5px; font-family:var(--mono);}
+  .alta-panel{padding:0 2px 4px;}
+  .alta-panel .alta-title{font-size:var(--fs-body); font-weight:500; color:var(--carbon-gastado); margin-bottom:var(--gap-micro);}
+  .alta-panel .alta-sub{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); line-height:1.5; margin-bottom:var(--gap-block);}
+  .alta-field{margin-bottom:var(--gap-field);}
+  .alta-field label{display:block; font-size:var(--fs-micro); font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--gris-oscuro); margin-bottom:var(--gap-micro); font-family:var(--mono);}
   .alta-field label .alta-opt{color:var(--muted-2); font-weight:400;}
   .alta-field input{
     width:100%; border:1px solid var(--precision-line); background:var(--paper);
-    border-radius:var(--radius); padding:10px 12px; font-size:var(--fs-body); font-weight:400;
+    border-radius:var(--radius); padding:var(--pad-control) 12px; font-size:var(--fs-body); font-weight:400;
     font-family:var(--sans); color:var(--carbon-gastado); box-shadow: var(--carve);
   }
   .alta-field input::placeholder{color:var(--muted-2); font-weight:300;}
-  .alta-error{font-size:var(--fs-small); font-weight:400; color:var(--brand-ink); margin:-2px 0 10px;}
-  .alta-actions{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px;}
+  .alta-error{font-size:var(--fs-small); font-weight:400; color:var(--brand-ink); margin:-4px 0 var(--gap-field);}
+  .alta-actions{display:flex; align-items:center; justify-content:space-between; gap:var(--gap-block); margin-top:var(--gap-block);}
   .alta-confirm{
     flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
     background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
@@ -1083,7 +1137,7 @@ function render(){
           ` : ''}
         </div>
       `}
-      <button class="alta-cancel" id="cambiarCursoBtn" style="display:block; margin:18px auto 0;">Cambiar de curso</button>
+      <button class="alta-cancel" id="cambiarCursoBtn" style="display:block; margin:var(--gap-close) auto 0;">Cambiar de curso</button>
     </div>
   `;
 
