@@ -73,6 +73,31 @@
      partir de eso; se reinicia a Presente en cada curso/fecha nuevo
      (aplicarAsistenciaCargada) para no arrastrar estado entre planillas.
 
+  v14 — ajustes puntuales de esta sesión (login, mensajes de guardado
+  y el punto naranja):
+  · #googleBtn arranca en opacity:0 y se revela recién 400ms después
+    de pedirle a Google que dibuje el botón. El repintado en dos
+    pasos que se veía ("un botón que se actualiza y cambia") pasa
+    dentro del iframe que arma el propio script de Google — no es
+    editable desde acá —, así que en vez de arreglar ese repintado se
+    lo oculta hasta que termina y se muestra solo el resultado final.
+  · Se elimina el texto "Guardado y verificado ✓ [fecha]" en los tres
+    lugares donde aparecía (guardado manual, reintento automático en
+    flushQueue, y el botón demo "Guardado ok") — el botón ya pasa a
+    decir "Guardado" en el momento en que eso es cierto (después de
+    loadForDate/loadForDate-equivalente), así que el texto repetía la
+    misma información. Se conserva el aviso de registros ignorados
+    cuando corresponde, y el de "Subido apenas volvió la señal" en el
+    reintento automático — ninguno de los dos es redundante con el
+    estado del botón.
+  · .save-btn.is-saved .save-dot vuelve a quedar hueco (background
+    transparent, como pidió esta sesión) pero conserva el
+    box-shadow:var(--carve) para el efecto tallado. La animación
+    save-seal pasa de un pulso rápido (.4s, sin pausa) a un press más
+    firme: entra, se sostiene comprimido una fracción del recorrido y
+    recién ahí suelta (.6s en total) — para que se sienta como un
+    sellado sólido y no como un tilde rápido.
+
   v13 — ajustes puntuales de esta sesión sobre agregar-alumno,
   guardado y login:
   · .att-header h1 + .date-row (regla puntual de v12) se elimina: ya
@@ -405,9 +430,9 @@
   .save-btn .save-btn-label{line-height:1;}
   .save-btn.is-saving, .save-btn.is-saved{pointer-events:none;}
   .save-btn.is-saving .save-dot{border-color: rgba(217,105,43,.22); border-top-color: var(--brand); box-shadow:none; animation: save-spin 1s linear infinite;}
-  .save-btn.is-saved .save-dot{border-color: var(--brand); background: var(--brand); box-shadow: var(--carve); animation: save-seal .4s var(--ease-premium) forwards;}
+  .save-btn.is-saved .save-dot{border-color: var(--brand); background: transparent; box-shadow: var(--carve); animation: save-seal .6s var(--ease-premium) forwards;}
   @keyframes save-spin{ to{ transform:rotate(360deg); } }
-  @keyframes save-seal{ 0%{ transform:scale(1); } 45%{ transform:scale(.7); } 100%{ transform:scale(1); } }
+  @keyframes save-seal{ 0%{ transform:scale(1); } 35%{ transform:scale(.68); } 60%{ transform:scale(.68); } 100%{ transform:scale(1); } }
   .add-btn{
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
@@ -633,7 +658,7 @@ async function flushQueue(){
   if (afectaVistaActual){
     await loadForDate(currentDate);
     saveState = 'saved';
-    statusMsg = `Guardado y verificado ✓ ${formatDate(currentDate)} — subido apenas volvió la señal.`;
+    statusMsg = 'Subido apenas volvió la señal.';
     render();
     setTimeout(() => { saveState = 'idle'; statusMsg = ''; render(); }, 4000);
   } else {
@@ -694,11 +719,25 @@ async function init(){
 // pantalla solo necesita una). Se llama tanto en el arranque como al
 // volver a la pantalla de login después de cerrar sesión, porque cada
 // render() recrea el <div id="googleBtn"> vacío.
+//
+// El propio botón de Google se pinta en dos pasos dentro de su iframe
+// (una primera versión y después la definitiva con logo/tipografía ya
+// cargados) — eso es lo que se veía como "dos botones". No podemos
+// tocar ese iframe, así que el contenedor arranca en opacity:0 y recién
+// se muestra 400ms después de pedirle a Google que lo dibuje, tiempo
+// de sobra para que termine su propio repintado. Así solo se ve la
+// versión final.
 function montarBotonGoogle(){
+  const cont = document.getElementById('googleBtn');
+  cont.style.opacity = '0';
   google.accounts.id.renderButton(
-    document.getElementById('googleBtn'),
+    cont,
     { theme: 'outline', size: 'large', width: 280, locale: 'es' }
   );
+  setTimeout(() => {
+    cont.style.transition = 'opacity .2s ease';
+    cont.style.opacity = '1';
+  }, 400);
 }
 
 async function handleGoogleLogin(response){
@@ -880,10 +919,9 @@ async function save(){
   saveState = 'saved';
   render();
   await loadForDate(currentDate); // deja attendanceSaved sincronizado
-  const avisoIgnorados = result.ignorados > 0
-    ? ` — ${result.ignorados} registro(s) ignorado(s) por no pertenecer a este curso`
+  statusMsg = result.ignorados > 0
+    ? `${result.ignorados} registro(s) ignorado(s) por no pertenecer a este curso`
     : '';
-  statusMsg = `Guardado y verificado ✓ ${formatDate(currentDate)}${avisoIgnorados}`;
   render();
   setTimeout(() => { saveState = 'idle'; render(); }, 2200);
 }
@@ -901,7 +939,7 @@ function demoSimulateSave(kind){
     statusMsg = 'No se pudo guardar. Revisá e intentá de nuevo.';
   } else if (kind === 'ok'){
     saveState = 'saved';
-    statusMsg = `Guardado y verificado ✓ ${formatDate(currentDate)}`;
+    statusMsg = '';
     attendanceSaved = Object.assign({}, attendance);
     setTimeout(() => { saveState = 'idle'; render(); }, 2200);
   }
@@ -1078,7 +1116,7 @@ function render(){
       <div class="login-screen">
         <div class="login-main">
           <img class="login-logo" src="logo-emfp10.png" alt="EMFP10">
-          <div id="googleBtn" style="width:100%; min-height:40px; display:flex; justify-content:center; margin:6px 0 0;"></div>
+          <div id="googleBtn" style="width:100%; min-height:40px; display:flex; justify-content:center; margin:6px 0 0; opacity:0;"></div>
         </div>
         <div class="login-foot">EMFP10 · Asistencia</div>
       </div>`;
