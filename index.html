@@ -790,7 +790,7 @@ async function goToCourseListOrSaved(){
     const data = await apiGet('action=cursos');
     cursos = data.cursos;
   }catch(e){
-    errorMsg = 'No se pudo conectar. Revisá tu conexión e intentá de nuevo.';
+    errorMsg = 'No se pudo conectar. ReerrorMsg = `No se pudo conectar. Detalle: ${e.message || e}`;visá tu conexión e intentá de nuevo.';
     screen = 'error';
     render();
     return;
@@ -840,7 +840,7 @@ async function openCurso(id, nombre, meta){
     students = data.roster;
     aplicarAsistenciaCargada(data.attendance);
   }catch(e){
-    errorMsg = 'No se pudo cargar el curso. Revisá tu conexión e intentá de nuevo.';
+    errorMsg = 'No se pudo cargar el curerrorMsg = `No se pudo cargar el curso. Detalle: ${e.message || e}`;so. Revisá tu conexión e intentá de nuevo.';
     screen = 'error';
     render();
     return;
