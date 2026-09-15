@@ -30,6 +30,7 @@
     --radius:0px;
     --carve: inset 0 2px 3px rgba(42,40,38,.12), inset 0 -1px 0 rgba(255,255,255,.55);
     --ease-premium: cubic-bezier(.65,0,.35,1);
+    --ease-shine: cubic-bezier(.4,0,.2,1); /* pareja de principio a fin — la .19,1,.22,1 anterior movía casi todo en los primeros ~300ms */
     --sans:ui-rounded,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     --mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono',monospace;
     --gutter: 28px;
@@ -97,7 +98,7 @@
   .shine-host::after{
     content: attr(data-text);
     position:absolute; left:0; top:0; white-space:nowrap;
-    background-image: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.95) 50%, transparent 65%);
+    background-image: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.85) 50%, transparent 58%);
     background-size: 250% 100%;
     background-repeat: no-repeat;
     background-position: 120% 0;
@@ -107,7 +108,7 @@
   }
   .shine-host.shine-play::after{
     opacity:1;
-    animation: shine-sweep .7s var(--ease-premium) forwards;
+    animation: shine-sweep 1.1s var(--ease-shine) forwards;
   }
   @keyframes shine-sweep{
     from{ background-position: 120% 0; }
@@ -308,7 +309,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtg9d0gkoTkVQ_lciJk7SugqMXaoqAM93XmN3U6ghpxOjfhrwoGP8J7Yw5mP-5uNMd/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxXKM-KaWKY8K9Zo9bbmd644YElX8iahyidsLAygx1iBn6adYoCcvHv9X9uzVKe_Pa5/exec";
 
 const GOOGLE_CLIENT_ID = "602289685493-vqk48ip48087vjpc2fmm1odkdrnqkja8.apps.googleusercontent.com";
 
@@ -917,7 +918,7 @@ function render(){
           void host.offsetWidth;
           host.classList.add('shine-play');
         }
-        setTimeout(() => openCurso(btn.dataset.id, btn.dataset.nombre, btn.dataset.meta), 1000);
+        setTimeout(() => openCurso(btn.dataset.id, btn.dataset.nombre, btn.dataset.meta), 1400);
       });
     });
     return;
