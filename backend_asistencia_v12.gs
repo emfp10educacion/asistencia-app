@@ -1,7 +1,4 @@
 /**
- * BACKEND — pegar esto en Extensiones > Apps Script del Google Sheet,
- * reemplazando el contenido actual (v11).
- *
  * v12 — Cambios respecto a v11:
  *
  *  - altaAlumno() YA NO DUPLICA FILA CUANDO EL ALUMNO YA EXISTE EN OTRO
