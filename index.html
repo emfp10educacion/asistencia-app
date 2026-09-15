@@ -109,7 +109,7 @@
     box-shadow: var(--carve);
   }
   .date-row span:last-child{color:var(--gris-oscuro); line-height:1;}
-  .att-body{flex:1; overflow:hidden; padding:var(--gap-block) var(--gutter) 0;}
+  .att-body{flex:1; overflow:hidden; padding:var(--gap-block) var(--gutter) var(--gap-close);}
 
   .stat-strip{
     display:flex; border:1px solid var(--precision-line);
@@ -192,7 +192,7 @@
     text-shadow:0 1px 0 rgba(255,255,255,.6); pointer-events:none;
   }
 
-  .gbtn:active, .alta-cancel:active,
+  .gbtn:active, .alta-cancel:active, .curso-item:active,
   .save-btn:active, .add-btn:active, .alta-confirm:active{
     box-shadow: inset 2px 2px 3px rgba(42,40,38,.12), inset -1px -1px 0 rgba(70,65,58,.6);
   }
@@ -240,6 +240,19 @@
   .alta-cancel{
     background:none; border:none; color:var(--gris-oscuro); font-size:var(--fs-small); font-weight:400;
     font-family:inherit; padding:6px 4px; cursor:pointer;
+  }
+
+  /* hundimiento sutil para botones de solo texto (sin caja/borde visible en
+     reposo): el box-shadow inset compartido con los botones con fondo no
+     se lee bien acá, así que en vez de una sombra se hunde el propio texto
+     — se achica un poco y baja 1px, con un fade leve, y vuelve con el mismo
+     ease "premium" que usa el resto de la app. */
+  #cambiarCursoBtn, #cambiarNombreBtn{
+    transition: transform .12s var(--ease-premium), opacity .12s var(--ease-premium);
+  }
+  #cambiarCursoBtn:active, #cambiarNombreBtn:active{
+    transform: translateY(1px) scale(.96);
+    opacity:.6;
   }
 </style>
 </head>
