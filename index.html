@@ -343,6 +343,19 @@ let statusMsg = '';
 
 let bulkAllTarget = PRESENTE;
 
+// Cualquier texto que venga de la planilla (nombre, curso, sede,
+// quién cargó) pasa por acá antes de ir a innerHTML. Sin esto, un
+// nombre de alumno con HTML adentro se ejecuta como código en vez de
+// mostrarse como texto — ver revisión de seguridad.
+function escapeHtml(str){
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function todayLocal(){
   const d = new Date();
   const y = d.getFullYear();
@@ -822,7 +835,7 @@ function updateStatCounts(){
 function switchHTML(s){
   const isP = attendance[s.dni] === PRESENTE;
   return `
-    <div class="switch ${isP ? 'is-p' : 'is-a'}" data-dni="${s.dni}">
+    <div class="switch ${isP ? 'is-p' : 'is-a'}" data-dni="${escapeHtml(s.dni)}">
       <div class="switch-cell">
         <svg class="switch-check" viewBox="0 0 24 24" aria-hidden="true">
           <path class="check-glow check-glow-3" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
@@ -843,7 +856,7 @@ function render(){
     return;
   }
   if (screen === 'error'){
-    app.innerHTML = `<div class="plain-msg">${errorMsg}</div>`;
+    app.innerHTML = `<div class="plain-msg">${escapeHtml(errorMsg)}</div>`;
     return;
   }
   if (screen === 'login'){
@@ -861,7 +874,7 @@ function render(){
     app.innerHTML = `
       <div class="login-screen">
         <h2>No se pudo iniciar sesión</h2>
-        <p>${errorMsg}</p>
+        <p>${escapeHtml(errorMsg)}</p>
         <button class="gbtn" id="reintentarBtn"><span class="g-dot"></span><span class="gbtn-label">Volver a intentar</span></button>
         <div class="login-foot">EMFP10 · Asistencia</div>
       </div>`;
@@ -878,13 +891,13 @@ function render(){
       <div class="select-screen">
         <h2>Elegir curso</h2>
         <p class="sub"><button class="alta-cancel" id="cambiarNombreBtn">Inicio</button></p>
-        <input type="text" class="filtro-input" id="filtroInput" placeholder="Buscar por nombre o sede…" value="${cursoFiltro}">
+        <input type="text" class="filtro-input" id="filtroInput" placeholder="Buscar por nombre o sede…" value="${escapeHtml(cursoFiltro)}">
         <ul class="curso-list" id="cursoList" style="list-style:none; margin:0; padding:0;">
           ${filtrados.length ? filtrados.map(c => `
             <li>
-              <button class="curso-item" data-id="${c.id}" data-nombre="${c.nombre}" data-meta="${c.sede}">
-                <span class="cnombre shine-host" data-text="${c.nombre}">${c.nombre}</span>
-                <span class="cmeta">${c.sede}</span>
+              <button class="curso-item" data-id="${escapeHtml(c.id)}" data-nombre="${escapeHtml(c.nombre)}" data-meta="${escapeHtml(c.sede)}">
+                <span class="cnombre shine-host" data-text="${escapeHtml(c.nombre)}">${escapeHtml(c.nombre)}</span>
+                <span class="cmeta">${escapeHtml(c.sede)}</span>
               </button>
             </li>`).join('') : `<div class="curso-empty">No se encontraron cursos.</div>`}
         </ul>
@@ -914,8 +927,8 @@ function render(){
   if (screen === 'alta'){
     app.innerHTML = `
       <div class="att-header">
-        <h1>${cursoNombre}</h1>
-        ${cursoMeta ? `<div class="header-meta">${cursoMeta}</div>` : ''}
+        <h1>${escapeHtml(cursoNombre)}</h1>
+        ${cursoMeta ? `<div class="header-meta">${escapeHtml(cursoMeta)}</div>` : ''}
         <div class="header-divider"></div>
       </div>
       <div class="att-body">
@@ -924,17 +937,17 @@ function render(){
           <div class="alta-title">Agregar alumno</div>
           <div class="alta-field">
             <label>DNI</label>
-            <input type="text" id="altaDni" inputmode="numeric" value="${altaForm.dni}">
+            <input type="text" id="altaDni" inputmode="numeric" value="${escapeHtml(altaForm.dni)}">
           </div>
           <div class="alta-field">
             <label>Apellido y nombre</label>
-            <input type="text" id="altaNombre" value="${altaForm.nombre}">
+            <input type="text" id="altaNombre" value="${escapeHtml(altaForm.nombre)}">
           </div>
           <div class="alta-field">
             <label>Teléfono</label>
-            <input type="tel" id="altaTelefono" inputmode="tel" value="${altaForm.telefono}">
+            <input type="tel" id="altaTelefono" inputmode="tel" value="${escapeHtml(altaForm.telefono)}">
           </div>
-          ${altaForm.error ? `<div class="alta-error">${altaForm.error}</div>` : ''}
+          ${altaForm.error ? `<div class="alta-error">${escapeHtml(altaForm.error)}</div>` : ''}
           <div class="alta-actions">
             <button class="alta-confirm" id="confirmarAltaBtn" ${altaSaving ? 'disabled' : ''}><span class="save-dot"></span><span>${altaSaving ? 'Agregando…' : 'Agregar'}</span></button>
             <button class="alta-cancel" id="cancelarAltaBtn">Cancelar</button>
@@ -957,19 +970,19 @@ function render(){
   const absentCount = students.length - presentCount;
 
   const banner = cargadoInfo.cargado
-    ? `<div class="banner-info">Esta fecha ya fue cargada el ${cargadoInfo.ultimaCarga}${cargadoInfo.cargadoPor ? ' por ' + cargadoInfo.cargadoPor : ''}. Guardar de nuevo la va a modificar.</div>`
+    ? `<div class="banner-info">Esta fecha ya fue cargada el ${escapeHtml(cargadoInfo.ultimaCarga)}${cargadoInfo.cargadoPor ? ' por ' + escapeHtml(cargadoInfo.cargadoPor) : ''}. Guardar de nuevo la va a modificar.</div>`
     : '';
 
   app.innerHTML = `
     <div class="att-header">
-      <h1>${cursoNombre}</h1>
-      ${cursoMeta ? `<div class="header-meta">${cursoMeta}</div>` : ''}
+      <h1>${escapeHtml(cursoNombre)}</h1>
+      ${cursoMeta ? `<div class="header-meta">${escapeHtml(cursoMeta)}</div>` : ''}
       <div class="header-divider"></div>
     </div>
 
     <div class="att-body">
       ${sinAlumnos ? `
-        <div class="curso-empty">Este curso todavía no tiene alumnos cargados. Verificá que "Alumnos" tenga filas con ID Curso <strong>${cursoId}</strong>, DNI y Alumno completos.</div>
+        <div class="curso-empty">Este curso todavía no tiene alumnos cargados. Verificá que "Alumnos" tenga filas con ID Curso <strong>${escapeHtml(cursoId)}</strong>, DNI y Alumno completos.</div>
         <div style="padding-top:10px;">
           <button class="add-btn" id="abrirAltaBtn"><span class="save-dot"></span><span class="save-btn-label">Agregar alumno</span></button>
         </div>
@@ -994,7 +1007,7 @@ function render(){
         <div class="roster">
           ${students.map(s => `
             <div class="student">
-              <div class="sname">${s.name}</div>
+              <div class="sname">${escapeHtml(s.name)}</div>
               ${switchHTML(s)}
             </div>`).join('')}
         </div>
@@ -1003,7 +1016,7 @@ function render(){
           <button class="save-btn ${saveState==='saving'?'is-saving':''} ${saveState==='saved'?'is-saved':''}" id="saveBtn">
             <span class="save-dot"></span><span class="save-btn-label shine-host ${saveState==='saved'?'shine-play':''}" data-text="${saveState==='saving'?'Guardando':saveState==='saved'?'Guardado':'Guardar asistencia'}">${saveState==='saving'?'Guardando':saveState==='saved'?'Guardado':'Guardar asistencia'}</span>
           </button>
-          <div class="status" id="status">${statusMsg}</div>
+          <div class="status" id="status">${escapeHtml(statusMsg)}</div>
           <button class="add-btn" id="abrirAltaBtn"><span class="save-dot"></span><span class="save-btn-label">Agregar alumno</span></button>
           ${DEMO ? `
             <div style="margin-top:16px; padding:10px 12px; border:1px dashed var(--muted-2);">
