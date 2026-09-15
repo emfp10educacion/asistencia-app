@@ -71,22 +71,22 @@
   .login-foot{margin-top:var(--gap-close); font-size:var(--fs-micro); font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--muted-2);}
 
   .select-screen{flex:1; display:flex; flex-direction:column; padding:40px var(--gutter) 20px;}
-  .select-screen h2{font-size:var(--fs-heading); font-weight:300; margin:0 0 var(--gap-heading); text-align:center; color:var(--brand);}
-  .select-screen .sub{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin:0 0 var(--gap-block);}
+  .select-screen h2{font-size:var(--fs-display); font-weight:600; letter-spacing:.02em; margin:0 0 var(--gap-heading); text-align:center; color:var(--brand);}
+  .select-screen .sub{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; margin:var(--gap-micro) 0 var(--gap-heading);}
   .filtro-input{
-    width:100%; border:1px solid var(--precision-line); background:var(--paper);
+    width:100%; border:1px solid var(--line-soft); background:var(--paper);
     border-radius:var(--radius); padding:var(--pad-control) 12px; font-size:var(--fs-body); font-weight:400;
     font-family:var(--sans); color:var(--carbon-gastado); box-shadow:var(--carve); margin-bottom:var(--gap-block);
   }
   .filtro-input::placeholder{color:var(--muted-2); font-weight:300;}
   .filtro-input:focus{outline:1px solid var(--gris-oscuro); outline-offset:1px;}
-  .curso-list{list-style:none; margin:0; padding:0; overflow-y:auto; flex:1;}
+  .curso-list{list-style:none; margin:0; padding:0; overflow-y:auto; flex:1; border-top:1px solid var(--line-soft);}
   .curso-item{
-    width:100%; text-align:left; border:1px solid var(--precision-line); background:var(--paper);
-    border-radius:var(--radius); padding:var(--pad-control) 12px; margin-bottom:8px; box-shadow:var(--carve);
-    font-family:var(--sans); color:var(--carbon-gastado);
+    width:100%; text-align:left; border:none; border-bottom:1px solid var(--line-soft); background:none;
+    padding:var(--gap-block) 2px; font-family:var(--sans); color:var(--carbon-gastado);
   }
-  .curso-item .cnombre{display:block; font-size:var(--fs-body); font-weight:500; color:var(--gris-oscuro);}
+  .curso-list li:last-child .curso-item{border-bottom:none;}
+  .curso-item .cnombre{display:block; font-size:var(--fs-body); font-weight:400; color:var(--gris-oscuro);}
   .curso-item .cmeta{display:block; font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); margin-top:var(--gap-micro);}
   .curso-empty{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; padding:24px 4px; line-height:1.6;}
   .plain-msg{display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; font-size:var(--fs-body); font-weight:300; color:var(--gris-oscuro); line-height:1.6; flex:1;}
@@ -108,7 +108,7 @@
     width:100%; margin:0 0 var(--gap-block);
     box-shadow: var(--carve);
   }
-  .date-row span:last-child{color:var(--gris-oscuro); line-height:1;}
+  .date-row-text span:last-child{color:var(--gris-oscuro); line-height:1;}
   .att-body{flex:1; overflow:hidden; padding:var(--gap-block) var(--gutter) var(--gap-close);}
 
   .stat-strip{
@@ -192,7 +192,7 @@
     text-shadow:0 1px 0 rgba(255,255,255,.6); pointer-events:none;
   }
 
-  .gbtn:active, .alta-cancel:active, .curso-item:active, .date-row:active,
+  .gbtn:active,
   .save-btn:active, .add-btn:active, .alta-confirm:active{
     box-shadow: inset 2px 2px 3px rgba(42,40,38,.12), inset -1px -1px 0 rgba(70,65,58,.6);
   }
@@ -247,10 +247,15 @@
      se lee bien acá, así que en vez de una sombra se hunde el propio texto
      — se achica un poco y baja 1px, con un fade leve, y vuelve con el mismo
      ease "premium" que usa el resto de la app. */
-  #cambiarCursoBtn, #cambiarNombreBtn{
+  .alta-cancel, .curso-item, .date-row-text{
     transition: transform .12s var(--ease-premium), opacity .12s var(--ease-premium);
   }
-  #cambiarCursoBtn:active, #cambiarNombreBtn:active{
+  .alta-cancel:active, .curso-item:active{
+    transform: translateY(1px) scale(.96);
+    opacity:.6;
+  }
+  .date-row-text{display:flex; align-items:center; gap:8px;}
+  .date-row:active .date-row-text{
     transform: translateY(1px) scale(.96);
     opacity:.6;
   }
@@ -881,7 +886,7 @@ function render(){
         <div class="header-divider"></div>
       </div>
       <div class="att-body">
-        <div class="date-row mono"><span>${formatDateRow(currentDate)}</span><span>▾</span></div>
+        <div class="date-row mono"><span class="date-row-text"><span>${formatDateRow(currentDate)}</span><span>▾</span></span></div>
         <div class="alta-panel">
           <div class="alta-title">Agregar alumno</div>
           <div class="alta-field">
@@ -943,9 +948,8 @@ function render(){
         </div>
 
         <div class="date-row mono">
-          <span id="dateLabel">${formatDateRow(currentDate)}</span>
+          <span class="date-row-text"><span id="dateLabel">${formatDateRow(currentDate)}</span><span>▾</span></span>
           <input type="date" id="datePicker" value="${currentDate}" max="${todayLocal()}" style="position:absolute; inset:0; opacity:0; cursor:pointer; border:0; padding:0; margin:0; width:100%; height:100%; z-index:2;">
-          <span>▾</span>
         </div>
 
         ${banner}
