@@ -88,6 +88,31 @@
   .curso-list li:last-child .curso-item{border-bottom:none;}
   .curso-item .cnombre{display:block; font-size:var(--fs-body); font-weight:400; color:var(--gris-oscuro);}
   .curso-item .cmeta{display:block; font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); margin-top:var(--gap-micro);}
+
+  /* brillo en movimiento sobre texto: una copia del texto (attr(data-text))
+     se superpone recortada al glifo, con un degradé claro que barre de
+     izquierda a derecha una sola vez. mix-blend-mode aclara el texto de
+     base sin taparlo. */
+  .shine-host{position:relative; display:inline-block;}
+  .shine-host::after{
+    content: attr(data-text);
+    position:absolute; left:0; top:0; white-space:nowrap;
+    background-image: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.95) 50%, transparent 65%);
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    background-position: 120% 0;
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent; -webkit-text-fill-color: transparent;
+    mix-blend-mode: screen; pointer-events:none; opacity:0;
+  }
+  .shine-host.shine-play::after{
+    opacity:1;
+    animation: shine-sweep .7s var(--ease-premium) forwards;
+  }
+  @keyframes shine-sweep{
+    from{ background-position: 120% 0; }
+    to{ background-position: -120% 0; }
+  }
   .curso-empty{font-size:var(--fs-small); font-weight:300; color:var(--gris-oscuro); text-align:center; padding:24px 4px; line-height:1.6;}
   .plain-msg{display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; font-size:var(--fs-body); font-weight:300; color:var(--gris-oscuro); line-height:1.6; flex:1;}
   .bulk-actions{display:flex; gap:16px; justify-content:center; margin-bottom:var(--gap-block);}
@@ -206,9 +231,9 @@
   .save-btn .save-btn-label{line-height:1;}
   .save-btn.is-saving, .save-btn.is-saved{pointer-events:none;}
   .save-btn.is-saving .save-dot{border-color: rgba(217,105,43,.22); border-top-color: var(--brand); box-shadow:none; animation: save-spin 1s linear infinite;}
-  .save-btn.is-saved .save-dot{border-color: var(--brand); background: transparent; box-shadow: var(--carve); animation: save-seal .6s var(--ease-premium) forwards;}
+  .save-btn.is-saved .save-dot{border-color: var(--brand); background: transparent; box-shadow: var(--carve); animation: dot-sink .5s var(--ease-premium) forwards;}
   @keyframes save-spin{ to{ transform:rotate(360deg); } }
-  @keyframes save-seal{ 0%{ transform:scale(1); } 35%{ transform:scale(.68); } 60%{ transform:scale(.68); } 100%{ transform:scale(1); } }
+  @keyframes dot-sink{ 0%{ transform:scale(1); } 45%{ transform:scale(.68); } 100%{ transform:scale(1); } }
   .add-btn{
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; background:var(--paper); color:var(--carbon-gastado); border:1px solid var(--muted-2); border-radius:var(--radius);
@@ -858,7 +883,7 @@ function render(){
           ${filtrados.length ? filtrados.map(c => `
             <li>
               <button class="curso-item" data-id="${c.id}" data-nombre="${c.nombre}" data-meta="${c.sede}">
-                <span class="cnombre">${c.nombre}</span>
+                <span class="cnombre shine-host" data-text="${c.nombre}">${c.nombre}</span>
                 <span class="cmeta">${c.sede}</span>
               </button>
             </li>`).join('') : `<div class="curso-empty">No se encontraron cursos.</div>`}
@@ -873,7 +898,15 @@ function render(){
     });
     document.getElementById('cambiarNombreBtn').addEventListener('click', cerrarSesion);
     document.querySelectorAll('.curso-item').forEach(btn => {
-      btn.addEventListener('click', () => openCurso(btn.dataset.id, btn.dataset.nombre, btn.dataset.meta));
+      btn.addEventListener('click', () => {
+        const host = btn.querySelector('.shine-host');
+        if (host){
+          host.classList.remove('shine-play');
+          void host.offsetWidth;
+          host.classList.add('shine-play');
+        }
+        setTimeout(() => openCurso(btn.dataset.id, btn.dataset.nombre, btn.dataset.meta), 300);
+      });
     });
     return;
   }
@@ -968,7 +1001,7 @@ function render(){
 
         <div class="save-bar">
           <button class="save-btn ${saveState==='saving'?'is-saving':''} ${saveState==='saved'?'is-saved':''}" id="saveBtn">
-            <span class="save-dot"></span><span class="save-btn-label">${saveState==='saving'?'Guardando':saveState==='saved'?'Guardado':'Guardar asistencia'}</span>
+            <span class="save-dot"></span><span class="save-btn-label shine-host ${saveState==='saved'?'shine-play':''}" data-text="${saveState==='saving'?'Guardando':saveState==='saved'?'Guardado':'Guardar asistencia'}">${saveState==='saving'?'Guardando':saveState==='saved'?'Guardado':'Guardar asistencia'}</span>
           </button>
           <div class="status" id="status">${statusMsg}</div>
           <button class="add-btn" id="abrirAltaBtn"><span class="save-dot"></span><span class="save-btn-label">Agregar alumno</span></button>
