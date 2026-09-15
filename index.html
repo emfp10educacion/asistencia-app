@@ -108,7 +108,7 @@
   }
   .shine-host.shine-play::after{
     opacity:1;
-    animation: shine-sweep 1.1s var(--ease-shine) forwards;
+    animation: shine-sweep .8s var(--ease-shine) forwards;
   }
   @keyframes shine-sweep{
     from{ background-position: 120% 0; }
@@ -918,7 +918,7 @@ function render(){
           void host.offsetWidth;
           host.classList.add('shine-play');
         }
-        setTimeout(() => openCurso(btn.dataset.id, btn.dataset.nombre, btn.dataset.meta), 1200);
+        setTimeout(() => openCurso(btn.dataset.id, btn.dataset.nombre, btn.dataset.meta), 800);
       });
     });
     return;
