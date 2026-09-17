@@ -940,7 +940,6 @@ function render(){
       ${pendingBannerHTML()}
       <div class="select-screen">
         <h2>Elegir curso</h2>
-        <p class="sub"><button class="alta-cancel" id="cambiarNombreBtn">Inicio</button></p>
         <input type="text" class="filtro-input" id="filtroInput" placeholder="Buscar por nombre o sede…" value="${escapeHtml(cursoFiltro)}">
         <ul class="curso-list" id="cursoList" style="list-style:none; margin:0; padding:0;">
           ${filtrados.length ? filtrados.map(c => `
@@ -951,6 +950,7 @@ function render(){
               </button>
             </li>`).join('') : `<div class="curso-empty">No se encontraron cursos.</div>`}
         </ul>
+        <button class="alta-cancel" id="cambiarNombreBtn" style="display:block; margin:var(--gap-close) auto 0;">Inicio</button>
       </div>`;
     document.getElementById('filtroInput').addEventListener('input', e => {
       cursoFiltro = e.target.value;
