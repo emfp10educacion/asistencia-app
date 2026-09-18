@@ -357,6 +357,25 @@ function escapeHtml(str){
     .replace(/'/g, '&#39;');
 }
 
+// Nombre/apellido "Con Mayúscula Inicial" para mostrar, sea cual sea el
+// formato en que esté cargado en la planilla (MAYÚSCULAS, minúsculas,
+// mezclado). Solo cambia lo que se ve en pantalla — no toca la hoja.
+// Conectores de apellido típicos ("de", "del", "la", "los", "las", "y")
+// quedan en minúscula salvo que sean la primera palabra. También
+// capitaliza después de guion o apóstrofo (ej. "Maria-Jose", "O'Higgins").
+const NOMBRE_CONECTORES = ['de', 'del', 'la', 'las', 'los', 'y'];
+function toTitleCase(str){
+  const base = String(str == null ? '' : str).trim().toLocaleLowerCase('es');
+  if (!base) return '';
+  return base
+    .split(/\s+/)
+    .map((palabra, i) => {
+      if (i > 0 && NOMBRE_CONECTORES.includes(palabra)) return palabra;
+      return palabra.replace(/(^|[-'])([a-záéíóúñü])/g, (m, sep, letra) => sep + letra.toLocaleUpperCase('es'));
+    })
+    .join(' ');
+}
+
 function todayLocal(){
   const d = new Date();
   const y = d.getFullYear();
@@ -515,7 +534,6 @@ async function init(){
 
 function montarBotonGoogle(){
   const cont = document.getElementById('googleBtn');
-  const salir = document.getElementById('salirBtn');
   cont.style.opacity = '0';
   google.accounts.id.renderButton(
     cont,
@@ -524,24 +542,7 @@ function montarBotonGoogle(){
   setTimeout(() => {
     cont.style.transition = 'opacity .2s ease';
     cont.style.opacity = '1';
-    if (salir){
-      salir.style.transition = 'opacity .2s ease';
-      salir.style.opacity = '1';
-    }
   }, 900);
-}
-
-// Salir de la app: en la PWA instalada (Android/desktop, display-mode
-// standalone) window.close() cierra la ventana propia de la app. En
-// una pestaña de navegador común el browser lo bloquea salvo que la
-// pestaña la haya abierto un script — no hay forma de forzarlo desde
-// acá, así que en vez de dejar el botón sin reacción visible, siempre
-// mostramos una pantalla de cierre: si window.close() funcionó, nunca
-// llega a verse; si no, le confirma al usuario que puede cerrar solo.
-function salirApp(){
-  try { window.close(); } catch(e) {}
-  screen = 'exit';
-  render();
 }
 
 async function handleGoogleLogin(response){
@@ -901,20 +902,6 @@ function render(){
         <div class="login-main">
           <img class="login-logo" src="logo-emfp10.png" alt="EMFP10">
           <div id="googleBtn" style="width:100%; min-height:40px; display:flex; justify-content:center; margin:6px 0 0; opacity:0;"></div>
-          <button class="alta-cancel" id="salirBtn" style="display:block; margin:var(--gap-close) auto 0; opacity:0;">Salir</button>
-        </div>
-        <div class="login-foot">EMFP10 · Asistencia</div>
-      </div>`;
-    document.getElementById('salirBtn').addEventListener('click', salirApp);
-    return;
-  }
-  if (screen === 'exit'){
-    app.innerHTML = `
-      <div class="login-screen">
-        <div class="login-main">
-          <img class="login-logo" src="logo-emfp10.png" alt="EMFP10">
-          <h2>Listo</h2>
-          <p>Ya podés cerrar esta ventana.</p>
         </div>
         <div class="login-foot">EMFP10 · Asistencia</div>
       </div>`;
@@ -1020,7 +1007,7 @@ function render(){
   const absentCount = students.length - presentCount;
 
   const banner = cargadoInfo.cargado
-    ? `<div class="banner-info">Esta fecha ya fue cargada el ${escapeHtml(cargadoInfo.ultimaCarga)}${cargadoInfo.cargadoPor ? ' por ' + escapeHtml(cargadoInfo.cargadoPor) : ''}. Guardar de nuevo la va a modificar.</div>`
+    ? `<div class="banner-info">Esta fecha ya fue cargada el ${escapeHtml(cargadoInfo.ultimaCarga)}${cargadoInfo.cargadoPor ? ' por ' + escapeHtml(toTitleCase(cargadoInfo.cargadoPor)) : ''}. Guardar de nuevo la va a modificar.</div>`
     : '';
 
   app.innerHTML = `
@@ -1057,7 +1044,7 @@ function render(){
         <div class="roster">
           ${students.map(s => `
             <div class="student">
-              <div class="sname">${escapeHtml(s.name)}</div>
+              <div class="sname">${escapeHtml(toTitleCase(s.name))}</div>
               ${switchHTML(s)}
             </div>`).join('')}
         </div>
