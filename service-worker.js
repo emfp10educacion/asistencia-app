@@ -28,7 +28,7 @@
 // v8: bump por el escapeHtml() agregado a index.html (revisión de
 // seguridad) + fallback offline agregado acá mismo para navegaciones
 // que no matchean una URL cacheada exacta (ver el catch() de fetch).
-const CACHE_NAME = 'asistencia-emfp10-v10';
+const CACHE_NAME = 'asistencia-emfp10-v11';
 
 const ARCHIVOS = [
   './',
