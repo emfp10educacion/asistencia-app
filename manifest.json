@@ -3,7 +3,7 @@
   "short_name": "Asistencia",
   "start_url": ".",
   "scope": ".",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#FCFCFB",
   "theme_color": "#FCFCFB",
   "lang": "es-AR",
